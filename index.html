@@ -522,10 +522,10 @@ function contentToHtml(raw) {
   var books = starter.slice();
   /* Danh sách dự phòng cố định: vẫn hiện PDF kể cả khi Safari cũ không gọi được API. */
   var remotePdfs = [
-    {id:"github-pdf-sua-de-1",title:"Sửa Đề 1",category:"Tài liệu PDF",author:"GitHub · PDF",summary:"PDF · Sửa Đề 1.pdf",content:"",pdfUrl:"https://scpngocmai.github.io/down/S%E1%BB%ADa%20%C4%90%E1%BB%81%201.pdf"},
-    {id:"github-pdf-de-doc-1",title:"Đề đọc 1",category:"Tài liệu PDF",author:"GitHub · PDF",summary:"PDF · Đề đọc 1.pdf",content:"",pdfUrl:"https://scpngocmai.github.io/down/%C4%90%E1%BB%81%20%C4%91%E1%BB%8Dc%201.pdf"},
-    {id:"github-pdf-de-doc-2",title:"Đề đọc 2",category:"Tài liệu PDF",author:"GitHub · PDF",summary:"PDF · Đề đọc 2.pdf",content:"",pdfUrl:"https://scpngocmai.github.io/down/%C4%90%E1%BB%81%20%C4%91%E1%BB%8Dc%202.pdf"},
-    {id:"github-pdf-de-doc-3",title:"Đề đọc 3",category:"Tài liệu PDF",author:"GitHub · PDF",summary:"PDF · Đề đọc 3.pdf",content:"",pdfUrl:"https://scpngocmai.github.io/down/%C4%90%E1%BB%81%20%C4%91%E1%BB%8Dc%203.pdf"}
+    {id:"github-pdf-sua-de-1",title:"Sửa Đề 1",category:"Tài liệu PDF",author:"GitHub · PDF",summary:"PDF · Sửa Đề 1.pdf",content:"",pdfUrl:"https://scpngocmai.github.io/down/files/S%E1%BB%ADa%20%C4%90%E1%BB%81%201.pdf"},
+    {id:"github-pdf-de-doc-1",title:"Đề đọc 1",category:"Tài liệu PDF",author:"GitHub · PDF",summary:"PDF · Đề đọc 1.pdf",content:"",pdfUrl:"https://scpngocmai.github.io/down/files/%C4%90%E1%BB%81%20%C4%91%E1%BB%8Dc%201.pdf"},
+    {id:"github-pdf-de-doc-2",title:"Đề đọc 2",category:"Tài liệu PDF",author:"GitHub · PDF",summary:"PDF · Đề đọc 2.pdf",content:"",pdfUrl:"https://scpngocmai.github.io/down/files/%C4%90%E1%BB%81%20%C4%91%E1%BB%8Dc%202.pdf"},
+    {id:"github-pdf-de-doc-3",title:"Đề đọc 3",category:"Tài liệu PDF",author:"GitHub · PDF",summary:"PDF · Đề đọc 3.pdf",content:"",pdfUrl:"https://scpngocmai.github.io/down/files/%C4%90%E1%BB%81%20%C4%91%E1%BB%8Dc%203.pdf"}
   ];
   function allBooks(){ return books.concat(remotePdfs); }
   var active = "Tất cả";
