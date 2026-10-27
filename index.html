@@ -720,8 +720,8 @@ function contentToHtml(raw) {
     r.readAsText(f);this.value="";
   };
   load();renderFilters();renderBooks();
-  /* Tự lấy PDF từ GitHub API; hiện chẩn đoán để biết vì sao Safari cũ không tải được danh sách. */
-  var githubApi="https://api.github.com/repos/SCPngocmai/down/contents/?ref=main";
+  /* Tự tìm PDF qua jsDelivr CDN API thay vì api.github.com (Safari iPad 2 có thể không kết nối được GitHub API). */
+  var fileListApi="https://data.jsdelivr.com/v1/package/gh/SCPngocmai/down@main/flat";
   function showPdfStatus(message){
     var box=document.getElementById("githubPdfStatus");
     if(!box){
@@ -733,39 +733,51 @@ function contentToHtml(raw) {
     }
     box.textContent=message;
   }
+  function encodePath(path){
+    return String(path||"").replace(/^\/+/,"").split("/").map(function(part){return encodeURIComponent(part);}).join("/");
+  }
   try{
     var request=new XMLHttpRequest();
-    request.open("GET",githubApi,true);
+    request.open("GET",fileListApi,true);
     request.onreadystatechange=function(){
       if(request.readyState!==4)return;
       if(request.status<200||request.status>=300){
-        showPdfStatus("Chưa lấy được danh sách PDF từ GitHub. Mã HTTP: "+request.status+".");
+        showPdfStatus("Không lấy được danh sách PDF qua máy chủ danh sách phụ (mã HTTP "+request.status+").");
         return;
       }
       try{
-        var entries=JSON.parse(request.responseText), found=[];
-        if(!entries||typeof entries.length!=="number")throw new Error("Phản hồi API không phải danh sách tệp");
-        for(var i=0;i<entries.length;i++){
-          var file=entries[i];
-          if(file&&file.type==="file"&&/\.pdf$/i.test(file.name)){
-            var title=file.name.replace(/\.pdf$/i,"").replace(/\s+/g," ").replace(/^\s+|\s+$/g,"");
-            found.push({id:"github-pdf-"+file.name,title:title,category:"Tài liệu PDF",author:"GitHub · PDF",summary:"Tệp PDF trong thư mục gốc GitHub. Bấm để mở hoặc đọc.",content:"",pdfUrl:"https://raw.githubusercontent.com/SCPngocmai/down/main/"+encodeURIComponent(file.name)});
-          }
+        var data=JSON.parse(request.responseText), files=data&&data.files, found=[];
+        if(!files||typeof files.length!=="number")throw new Error("Phản hồi danh sách tệp không hợp lệ");
+        for(var i=0;i<files.length;i++){
+          var entry=files[i], path=entry&&entry.name;
+          if(!path||!/\.pdf$/i.test(path))continue;
+          path=String(path).replace(/^\/+/,"");
+          var leaf=path.substring(path.lastIndexOf("/")+1);
+          var title=leaf.replace(/\.pdf$/i,"").replace(/\s+/g," ").replace(/^\s+|\s+$/g,"");
+          found.push({
+            id:"github-pdf-"+path,
+            title:title,
+            category:"Tài liệu PDF",
+            author:"GitHub · PDF",
+            summary:"Tệp PDF được tự tìm thấy trong kho GitHub.",
+            content:"",
+            pdfUrl:"https://cdn.jsdelivr.net/gh/SCPngocmai/down@main/"+encodePath(path)
+          });
         }
         remotePdfs=found;
-        if(found.length)showPdfStatus("Đã tự tìm thấy "+found.length+" tệp PDF trong thư mục gốc GitHub.");
-        else showPdfStatus("GitHub API kết nối được nhưng không thấy PDF ở thư mục gốc. Có thể PDF nằm trong thư mục con.");
+        if(found.length)showPdfStatus("Đã tự tìm thấy "+found.length+" tệp PDF trong kho GitHub (kể cả thư mục con).");
+        else showPdfStatus("Đã kết nối máy chủ danh sách nhưng chưa tìm thấy PDF trong kho.");
         renderFilters();renderBooks();
       }catch(error){
-        showPdfStatus("Đã kết nối GitHub nhưng không đọc được danh sách: "+String(error.message||error));
+        showPdfStatus("Đã kết nối nhưng không đọc được danh sách tệp: "+String(error.message||error));
       }
     };
-    request.onerror=function(){showPdfStatus("Safari không kết nối được GitHub API. Lỗi kết nối/trình duyệt, không phải do dấu tiếng Việt trong tên PDF.");};
-    request.ontimeout=function(){showPdfStatus("Kết nối GitHub API quá thời gian chờ. Hãy thử tải lại trang.");};
-    request.timeout=15000;
+    request.onerror=function(){showPdfStatus("iPad 2 không kết nối được máy chủ danh sách phụ. Có thể Safari quá cũ hoặc mạng chặn kết nối.");};
+    request.ontimeout=function(){showPdfStatus("Máy chủ danh sách phản hồi quá lâu. Hãy tải lại trang thử lần nữa.");};
+    request.timeout=20000;
     request.send();
   }catch(error){
-    showPdfStatus("Không thể khởi tạo yêu cầu GitHub API: "+String(error.message||error));
+    showPdfStatus("Không thể khởi tạo yêu cầu danh sách tệp: "+String(error.message||error));
   }
   var dateFooter = document.getElementById("dateFooter");
   if (dateFooter) {
