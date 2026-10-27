@@ -130,7 +130,7 @@ main { max-width:1040px; padding:18px 20px 24px; }
   .book h3 { font-size:20px; line-height:1.35; overflow-wrap:anywhere; }
   .book p, .meta { overflow-wrap:anywhere; }
   .reader { min-width:0; padding:20px 16px; overflow:hidden; border-radius:5px 16px 16px 5px; }
-  .reader h2 { font-size:clamp(22px, 4vw, 26px); line-height:1.35; overflow-wrap:anywhere; }
+  .reader h2 { font-size:24px; line-height:1.35; overflow-wrap:anywhere; }
   .reader .body { font-size:17px; line-height:1.85; overflow-wrap:anywhere; word-wrap:break-word; word-break:normal; }
   .reader .body h3 { font-size:19px; line-height:1.45; margin:1.5em 0 .6em; overflow-wrap:anywhere; }
   .reader .body p { margin:0 0 1.2em; }
@@ -590,7 +590,12 @@ function contentToHtml(raw) {
   };
   function openBook(id){
     var b=null;allBooks().forEach(function(x){if(String(x.id)===String(id))b=x;});if(!b)return;
-    if(b.pdfUrl){window.open(b.pdfUrl,"_blank");return;}
+    if(b.pdfUrl){
+      /* Điều hướng trực tiếp ổn định hơn window.open trên Safari iOS đời cũ. */
+      var opened=window.open(b.pdfUrl,"_blank");
+      if(!opened){window.location.href=b.pdfUrl;}
+      return;
+    }
     var content=contentToHtml(b.content||"");
     if(!/<(p|h[1-6]|blockquote|ul|ol|pre|br|table)\b/i.test(content)){
       content=content.split(/\n\s*\n/).map(function(p){return "<p>"+esc(p).replace(/\n/g,"<br>")+"</p>";}).join("");
@@ -720,9 +725,14 @@ function contentToHtml(raw) {
     r.readAsText(f);this.value="";
   };
   load();renderFilters();renderBooks();
-  /* Tự tìm PDF qua jsDelivr CDN API thay vì api.github.com (Safari iPad 2 có thể không kết nối được GitHub API). */
-  var fileListApi="https://data.jsdelivr.com/v1/package/gh/SCPngocmai/down@main/flat";
-  function showPdfStatus(message){
+  /* Tải danh sách PDF bằng các API dự phòng; dùng XMLHttpRequest để hỗ trợ Safari cũ. */
+  var pdfListSources = [
+    {url:"https://data.jsdelivr.com/v1/package/gh/SCPngocmai/down@main/flat", kind:"jsdelivr"},
+    {url:"https://api.github.com/repos/SCPngocmai/down/git/trees/main?recursive=1", kind:"github"}
+  ];
+  var pdfListAttempt = 0;
+  var pdfListFinished = false;
+  function showPdfStatus(message, canRetry){
     var box=document.getElementById("githubPdfStatus");
     if(!box){
       box=document.createElement("div");
@@ -731,54 +741,81 @@ function contentToHtml(raw) {
       var host=document.querySelector("main")||document.body;
       host.insertBefore(box,host.firstChild);
     }
-    box.textContent=message;
+    while(box.firstChild)box.removeChild(box.firstChild);
+    box.appendChild(document.createTextNode(message));
+    if(canRetry){
+      var retry=document.createElement("button");
+      retry.type="button";
+      retry.textContent="Tải lại danh sách PDF";
+      retry.style.cssText="display:block;margin-top:9px;padding:8px 11px;font-size:12px;";
+      retry.onclick=function(){pdfListAttempt=0;pdfListFinished=false;remotePdfs=[];renderFilters();renderBooks();loadPdfList();};
+      box.appendChild(retry);
+    }
   }
   function encodePath(path){
     return String(path||"").replace(/^\/+/,"").split("/").map(function(part){return encodeURIComponent(part);}).join("/");
   }
-  try{
-    var request=new XMLHttpRequest();
-    request.open("GET",fileListApi,true);
-    request.onreadystatechange=function(){
-      if(request.readyState!==4)return;
-      if(request.status<200||request.status>=300){
-        showPdfStatus("Không lấy được danh sách PDF qua máy chủ danh sách phụ (mã HTTP "+request.status+").");
-        return;
-      }
-      try{
-        var data=JSON.parse(request.responseText), files=data&&data.files, found=[];
-        if(!files||typeof files.length!=="number")throw new Error("Phản hồi danh sách tệp không hợp lệ");
-        for(var i=0;i<files.length;i++){
-          var entry=files[i], path=entry&&entry.name;
-          if(!path||!/\.pdf$/i.test(path))continue;
-          path=String(path).replace(/^\/+/,"");
-          var leaf=path.substring(path.lastIndexOf("/")+1);
-          var title=leaf.replace(/\.pdf$/i,"").replace(/\s+/g," ").replace(/^\s+|\s+$/g,"");
-          found.push({
-            id:"github-pdf-"+path,
-            title:title,
-            category:"Tài liệu PDF",
-            author:"GitHub · PDF",
-            summary:"Tệp PDF được tự tìm thấy trong kho GitHub.",
-            content:"",
-            pdfUrl:"https://cdn.jsdelivr.net/gh/SCPngocmai/down@main/"+encodePath(path)
-          });
-        }
-        remotePdfs=found;
-        if(found.length)showPdfStatus("Đã tự tìm thấy "+found.length+" tệp PDF trong kho GitHub (kể cả thư mục con).");
-        else showPdfStatus("Đã kết nối máy chủ danh sách nhưng chưa tìm thấy PDF trong kho.");
-        renderFilters();renderBooks();
-      }catch(error){
-        showPdfStatus("Đã kết nối nhưng không đọc được danh sách tệp: "+String(error.message||error));
-      }
-    };
-    request.onerror=function(){showPdfStatus("iPad 2 không kết nối được máy chủ danh sách phụ. Có thể Safari quá cũ hoặc mạng chặn kết nối.");};
-    request.ontimeout=function(){showPdfStatus("Máy chủ danh sách phản hồi quá lâu. Hãy tải lại trang thử lần nữa.");};
-    request.timeout=20000;
-    request.send();
-  }catch(error){
-    showPdfStatus("Không thể khởi tạo yêu cầu danh sách tệp: "+String(error.message||error));
+  function buildPdfEntries(data, kind){
+    var entries, found=[];
+    if(kind==="jsdelivr") entries=data&&data.files;
+    else entries=data&&data.tree;
+    if(!entries||typeof entries.length!=="number")throw new Error("Phản hồi danh sách tệp không hợp lệ");
+    for(var i=0;i<entries.length;i++){
+      var entry=entries[i];
+      var path=kind==="jsdelivr"?(entry&&entry.name):(entry&&entry.path);
+      if(!path||!/\.pdf$/i.test(path))continue;
+      path=String(path).replace(/^\/+/,"");
+      var leaf=path.substring(path.lastIndexOf("/")+1);
+      var title=leaf.replace(/\.pdf$/i,"").replace(/\s+/g," ").replace(/^\s+|\s+$/g,"");
+      var encoded=encodePath(path);
+      found.push({
+        id:"github-pdf-"+path,
+        title:title,
+        category:"Tài liệu PDF",
+        author:"GitHub · PDF",
+        summary:path.indexOf("/")>=0?"PDF · "+path:"Tệp PDF trong kho GitHub.",
+        content:"",
+        pdfUrl:"https://cdn.jsdelivr.net/gh/SCPngocmai/down@main/"+encoded,
+        pdfFallbackUrl:"https://raw.githubusercontent.com/SCPngocmai/down/main/"+encoded,
+        pdfPath:path
+      });
+    }
+    return found;
   }
+  function loadPdfList(){
+    if(pdfListAttempt>=pdfListSources.length){
+      pdfListFinished=true;
+      showPdfStatus("Chưa tải được danh sách PDF. Có thể iPad 2 không còn tương thích với kết nối bảo mật của máy chủ, hoặc mạng đang chặn dịch vụ. Hãy thử tải lại khi đổi mạng.",true);
+      return;
+    }
+    var source=pdfListSources[pdfListAttempt++];
+    showPdfStatus("Đang tải danh sách PDF từ kho GitHub…",false);
+    try{
+      var request=new XMLHttpRequest();
+      request.open("GET",source.url,true);
+      request.timeout=15000;
+      request.onreadystatechange=function(){
+        if(request.readyState!==4)return;
+        if(request.status<200||request.status>=300){loadPdfList();return;}
+        try{
+          var data=JSON.parse(request.responseText);
+          var found=buildPdfEntries(data,source.kind);
+          if(found.length){
+            remotePdfs=found;
+            pdfListFinished=true;
+            showPdfStatus("Đã tìm thấy "+found.length+" tệp PDF trong kho GitHub, kể cả thư mục con.",false);
+            renderFilters();renderBooks();
+          }else{
+            loadPdfList();
+          }
+        }catch(error){loadPdfList();}
+      };
+      request.onerror=function(){loadPdfList();};
+      request.ontimeout=function(){loadPdfList();};
+      request.send(null);
+    }catch(error){loadPdfList();}
+  }
+  loadPdfList();
   var dateFooter = document.getElementById("dateFooter");
   if (dateFooter) {
     var now = new Date();
