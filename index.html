@@ -515,11 +515,8 @@ function contentToHtml(raw) {
   return out.join("\n");
 }
 (function () {
-  var starter = [
-    {id:"bai-mau-1",title:"Giao tiếp: nghe để hiểu",category:"Giao tiếp",author:"Bài đọc minh họa",summary:"Một mẫu minh họa cách tiêu đề, đoạn văn và trích dẫn được trình bày.",content:"<p>Giao tiếp tốt không chỉ là nói rõ điều mình nghĩ, mà còn là nhận ra điều người đối diện đang cố truyền đạt.</p><h3>1. Lắng nghe chủ động</h3><p>Tập trung vào nội dung, cảm xúc và bối cảnh. Đừng vội chuẩn bị câu trả lời khi người kia vẫn đang nói.</p><blockquote>Lắng nghe không đồng nghĩa với đồng ý; đó là bước đầu để hiểu chính xác.</blockquote><h3>2. Kiểm tra lại cách hiểu</h3><p>Hãy diễn đạt ngắn gọn điều bạn vừa hiểu và cho người kia cơ hội điều chỉnh. Cách này giảm hiểu lầm và tiết kiệm thời gian.</p>"},
-    {id:"bai-mau-2",title:"Ghi chú một ý tưởng",category:"Ghi chú",author:"Bài đọc minh họa",summary:"Ví dụ cho một bài ngắn, có thể thay thế bằng nội dung của riêng bạn.",content:"<p>Mỗi ghi chú nên giữ một ý chính. Đặt tiêu đề cụ thể để sau này có thể tìm lại mà không phải đọc toàn bộ nội dung.</p><h3>Ý chính</h3><p>Ghi điều quan trọng nhất trước, sau đó bổ sung ví dụ và câu hỏi còn bỏ ngỏ.</p>"}
-  ];
-  var books = starter.slice();
+  /* Đã bỏ đúng 2 bài mẫu: Giao tiếp: nghe để hiểu và Ghi chú một ý tưởng. */
+  var books = [];
   /* Danh sách dự phòng cố định: vẫn hiện PDF kể cả khi Safari cũ không gọi được API. */
   var remotePdfs = [
     {id:"github-pdf-sua-de-1",title:"Sửa Đề 1",category:"Tài liệu PDF",author:"GitHub · PDF",summary:"PDF · Sửa Đề 1.pdf",content:"",pdfUrl:"https://scpngocmai.github.io/down/files/S%E1%BB%ADa%20%C4%90%E1%BB%81%201.pdf"},
