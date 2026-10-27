@@ -50,6 +50,13 @@
   .admin p, .hint { font:13px/1.6 Arial,sans-serif; color:#796d61; }
   .formgrid { display:grid; grid-template-columns:1fr; gap:9px; }
   textarea { width:100%; min-height:180px; line-height:1.5; resize:vertical; }
+  #newContent { display:block; width:100%; min-height:360px; max-height:none; overflow:auto; box-sizing:border-box; padding:14px; border:1px solid #d7c9b8; background:#fffaf2; color:#342b25; font:16px/1.7 Arial,sans-serif; white-space:normal; overflow-wrap:anywhere; }
+  #newContent:focus { outline:2px solid #9d4936; outline-offset:1px; }
+  #newContent:empty:before { content:attr(data-placeholder); color:#8b8177; pointer-events:none; }
+  #newContent h3 { font-size:1.25em; margin:1em 0 .5em; }
+  #newContent table, .reader .body table { border-collapse:collapse; width:100%; margin:14px 0; }
+  #newContent th, #newContent td, .reader .body th, .reader .body td { border:1px solid #bca995; padding:8px 10px; text-align:left; vertical-align:top; min-width:70px; }
+  #newContent th, .reader .body th { background:#eee2d2; font-weight:bold; }
   .actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
   .empty { padding:20px; color:#88796b; font:14px Arial,sans-serif; background:#eee5d8; }
   footer { max-width:900px; margin:0 auto; text-align:right; padding:24px 17px 24px 17px; font:11px/1.8 Arial,sans-serif; color:#9a8a79; letter-spacing:.5px; }
@@ -129,7 +136,10 @@ main { max-width:1040px; padding:18px 20px 24px; }
   .reader .body p { margin:0 0 1.2em; }
   .reader .body blockquote { margin:1.2em 0; padding:5px 0 5px 11px; }
   .reader .body img, .reader .body video, .reader .body iframe { max-width:100% !important; height:auto; }
-  .reader .body table { display:block; max-width:100%; overflow-x:auto; }
+  .reader .body table { display:block; width:100%; max-width:100%; overflow-x:auto; border-collapse:collapse; margin:1em 0; font-size:.92em; }
+  .reader .body th, .reader .body td { border:1px solid #cdbca9; padding:8px 10px; text-align:left; vertical-align:top; min-width:72px; }
+  .reader .body th { background:#eee2d2; font-weight:bold; }
+  .reader .body tr:nth-child(even) td { background:#fffaf2; }
   .reader .body pre, .reader .body code { white-space:pre-wrap; overflow-wrap:anywhere; }
   .reader .actions, .reader .top { display:flex; flex-wrap:wrap; gap:7px; }
 }
@@ -405,8 +415,9 @@ footer { max-width: 1180px !important; padding: 22px 5.2% 30px !important; }
         <button type="button" class="secondary mini-tool" onclick="formatContent('blockquote')">Trích dẫn</button>
         <button type="button" class="secondary mini-tool" onclick="formatContent('ul')">Danh sách</button>
         <button type="button" class="secondary mini-tool" onclick="formatContent('p')">Đoạn văn</button>
+        <button type="button" class="secondary mini-tool" onclick="formatContent('table')">Chèn bảng</button>
       </div>
-      <textarea id="newContent" class="wide" placeholder="Dán hoặc nhập nội dung bài đọc tại đây. Để định dạng, hãy chọn phần chữ rồi bấm nút phía trên. Nếu chưa chọn chữ, nút sẽ chèn một mẫu để tiện chỉnh sửa."></textarea>
+      <div id="newContent" class="wide" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="Dán hoặc nhập nội dung tại đây. Bôi đen chữ rồi bấm nút định dạng."></div>
     </div>
     <div class="actions">
       <button id="save">Lưu bài vào thư viện</button>
@@ -420,51 +431,88 @@ footer { max-width: 1180px !important; padding: 22px 5.2% 30px !important; }
 function formatContent(tag) {
   var area = document.getElementById("newContent");
   if (!area) return;
-  var start = area.selectionStart || 0;
-  var end = area.selectionEnd || 0;
-  var value = area.value;
-  var selected = value.substring(start, end);
-  var before = value.substring(0, start);
-  var after = value.substring(end);
-  var insert = "";
-  var cursorOffset = 0;
-
-  if (tag === "ul") {
-    if (selected) {
-      var lines = selected.split(/\\r?\\n/);
-      for (var i = 0; i < lines.length; i++) lines[i] = "<li>" + lines[i] + "</li>";
-      insert = "<ul>\\n" + lines.join("\\n") + "\\n</ul>";
-    } else {
-      insert = "<ul>\\n<li>Mục thứ nhất</li>\\n<li>Mục thứ hai</li>\\n</ul>";
-    }
-  } else {
-    var open = "<" + tag + ">";
-    var close = "</" + tag + ">";
-    if (selected) {
-      insert = open + selected + close;
-    } else {
-      var samples = {
-        "h3": "Tiêu đề mục",
-        "strong": "chữ cần in đậm",
-        "em": "chữ cần in nghiêng",
-        "blockquote": "Nội dung trích dẫn",
-        "p": "Nội dung đoạn văn"
-      };
-      var sample = samples[tag] || "Nội dung";
-      insert = open + sample + close;
-      cursorOffset = open.length;
-    }
-  }
-
-  area.value = before + insert + after;
   area.focus();
-  if (selected) {
-    area.setSelectionRange(start + insert.length, start + insert.length);
-  } else if (cursorOffset) {
-    area.setSelectionRange(start + cursorOffset, start + cursorOffset + (tag === "h3" ? 13 : tag === "strong" ? 15 : tag === "em" ? 17 : tag === "blockquote" ? 20 : 16));
-  } else {
-    area.setSelectionRange(start + insert.length, start + insert.length);
+  if (tag === "table") {
+    var r = parseInt(prompt("Bảng có bao nhiêu hàng (không tính hàng tiêu đề)?", "3"), 10);
+    if (!r || r < 1 || r > 30) return;
+    var c = parseInt(prompt("Bảng có bao nhiêu cột?", "3"), 10);
+    if (!c || c < 1 || c > 12) return;
+    var html = '<table><thead><tr>';
+    for (var j=0;j<c;j++) html += '<th>Tiêu đề '+(j+1)+'</th>';
+    html += '</tr></thead><tbody>';
+    for (var i=0;i<r;i++) { html += '<tr>'; for (var k=0;k<c;k++) html += '<td>Nội dung</td>'; html += '</tr>'; }
+    html += '</tbody></table><p><br></p>';
+    insertEditorHtml(html);
+    return;
   }
+  if (tag === "h3") { document.execCommand("formatBlock", false, "h3"); }
+  else if (tag === "p") { document.execCommand("formatBlock", false, "p"); }
+  else if (tag === "strong") { document.execCommand("bold", false, null); }
+  else if (tag === "em") { document.execCommand("italic", false, null); }
+  else if (tag === "blockquote") { document.execCommand("formatBlock", false, "blockquote"); }
+  else if (tag === "ul") { document.execCommand("insertUnorderedList", false, null); }
+  area.focus();
+}
+function insertEditorHtml(html) {
+  var area = document.getElementById("newContent"); area.focus();
+  if (document.queryCommandSupported && document.queryCommandSupported("insertHTML")) document.execCommand("insertHTML", false, html);
+  else {
+    var sel=window.getSelection();
+    if(sel && sel.rangeCount){var range=sel.getRangeAt(0);range.deleteContents();var temp=document.createElement("div");temp.innerHTML=html;var frag=document.createDocumentFragment();while(temp.firstChild)frag.appendChild(temp.firstChild);range.insertNode(frag);}
+    else area.insertAdjacentHTML("beforeend",html);
+  }
+}
+function escapeHtml(value) { return String(value == null ? "" : value).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function markdownForEditor(raw) {
+  var source=String(raw||"");
+  if (/<(p|h[1-6]|blockquote|ul|ol|pre|br|table|div)\b/i.test(source)) return contentToHtml(source);
+  var lines=source.split(/\r?\n/), out=[], i=0;
+  function esc2(v){return escapeHtml(v).replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>").replace(/\*(.+?)\*/g,"<em>$1</em>");}
+  function cells(line){return line.trim().replace(/^\|/,"").replace(/\|$/ ,"").split("|").map(function(x){return x.trim();});}
+  while(i<lines.length){
+    if(!lines[i].trim()){i++;continue;}
+    if(i+1<lines.length && lines[i].indexOf("|")>=0 && /^\s*\|?\s*:?-{3,}/.test(lines[i+1])){
+      var heads=cells(lines[i]), j=i+2, rows=[];
+      while(j<lines.length && lines[j].indexOf("|")>=0 && lines[j].trim()){rows.push(cells(lines[j]));j++;}
+      var t="<table><thead><tr>"; heads.forEach(function(x){t+="<th>"+esc2(x)+"</th>";});t+="</tr></thead><tbody>";
+      rows.forEach(function(row){t+="<tr>";for(var k=0;k<heads.length;k++)t+="<td>"+esc2(row[k]||"")+"</td>";t+="</tr>";});t+="</tbody></table>";out.push(t);i=j;continue;
+    }
+    var line=lines[i], m=line.match(/^(#{1,4})\s+(.*)$/);
+    if(m){out.push("<h"+(m[1].length+1)+">"+esc2(m[2])+"</h"+(m[1].length+1)+">");i++;continue;}
+    if(/^\s*[-*]\s+/.test(line)){var lis=[];while(i<lines.length && /^\s*[-*]\s+/.test(lines[i])){lis.push("<li>"+esc2(lines[i].replace(/^\s*[-*]\s+/,""))+"</li>");i++;}out.push("<ul>"+lis.join("")+"</ul>");continue;}
+    var para=[];while(i<lines.length&&lines[i].trim()&&!/^#{1,4}\s/.test(lines[i])){if(i+1<lines.length&&/^\s*\|?\s*:?-{3,}/.test(lines[i+1])&&lines[i].indexOf("|")>=0)break;para.push(esc2(lines[i]));i++;}
+    if(para.length)out.push("<p>"+para.join("<br>")+"</p>"); else i++;
+  }
+  return out.join("") || "<p><br></p>";
+}
+function contentToHtml(raw) {
+  var source = String(raw || "");
+  // Convert simple Markdown pipe tables to semantic HTML tables; keep all other content unchanged.
+  var lines = source.split(/\r?\n/), out = [], i = 0;
+  function cells(line) {
+    line = line.trim().replace(/^\|/, "").replace(/\|$/, "");
+    return line.split("|").map(function (c) { return c.trim(); });
+  }
+  function isSeparator(line) {
+    var c = cells(line);
+    return c.length > 0 && c.every(function (v) { return /^:?-{3,}:?$/.test(v.replace(/\s/g, "")); });
+  }
+  while (i < lines.length) {
+    if (i + 1 < lines.length && lines[i].indexOf("|") >= 0 && isSeparator(lines[i + 1])) {
+      var headers = cells(lines[i]), rows = [], j = i + 2;
+      while (j < lines.length && lines[j].indexOf("|") >= 0 && lines[j].trim()) { rows.push(cells(lines[j])); j++; }
+      var html = "<table><thead><tr>";
+      headers.forEach(function (h) { html += "<th>" + escapeHtml(h) + "</th>"; });
+      html += "</tr></thead><tbody>";
+      rows.forEach(function (row) {
+        html += "<tr>";
+        for (var k = 0; k < headers.length; k++) html += "<td>" + escapeHtml(row[k] || "") + "</td>";
+        html += "</tr>";
+      });
+      html += "</tbody></table>"; out.push(html); i = j;
+    } else { out.push(lines[i]); i++; }
+  }
+  return out.join("\n");
 }
 (function () {
   var starter = [
@@ -551,18 +599,11 @@ function formatContent(tag) {
   function openBook(id){
     var b=null;allBooks().forEach(function(x){if(String(x.id)===String(id))b=x;});if(!b)return;
     if(b.pdfUrl){window.open(b.pdfUrl,"_blank");return;}
-    var content=b.content||"";
-    if(!/<(p|h[1-6]|blockquote|ul|ol|pre|br)\b/i.test(content)){
+    var content=contentToHtml(b.content||"");
+    if(!/<(p|h[1-6]|blockquote|ul|ol|pre|br|table)\b/i.test(content)){
       content=content.split(/\n\s*\n/).map(function(p){return "<p>"+esc(p).replace(/\n/g,"<br>")+"</p>";}).join("");
     }
-    /* Mở bài đọc trong tab riêng để có toàn bộ không gian màn hình. */
-    var win=null;
-    try{win=window.open("", "_blank");}catch(e){}
-    if(win){
-      var page='<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+esc(b.title)+'</title><style>*{box-sizing:border-box}body{margin:0;background:#f2eadc;color:#3b2d25;font-family:Georgia,"Times New Roman",serif}.page{max-width:900px;margin:0 auto;padding:28px 22px 60px}.top{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:28px}button{border:1px solid #d7c9b8;border-radius:13px;padding:10px 15px;background:#e7dccd;color:#4b3c32;font:bold 13px Arial,sans-serif;cursor:pointer}.paper{background:#fffaf2;border:1px solid #e0d4c5;border-radius:5px 22px 22px 5px;padding:clamp(22px,5vw,54px);box-shadow:0 8px 24px rgba(83,57,37,.06)}.category{font:bold 11px Arial,sans-serif;letter-spacing:1.5px;color:#a34c38;text-transform:uppercase}.title{font-size:clamp(30px,4vw,42px);font-weight:normal;line-height:1.2;margin:12px 0}.meta{font:12px Arial,sans-serif;color:#8b7c6c;margin-bottom:26px}.body{font-size:clamp(18px,2vw,21px);line-height:1.9;overflow-wrap:anywhere}.body h1,.body h2,.body h3{font-weight:normal;line-height:1.35;margin:1.7em 0 .6em}.body h3{font-size:1.15em}.body p{margin:0 0 1.25em}.body blockquote{border-left:3px solid #a34c38;margin:1.5em 0;padding:5px 0 5px 18px;color:#80614f}.body img{max-width:100%;height:auto}@media(max-width:600px){.page{padding:14px 10px 35px}.paper{padding:22px 17px;border-radius:5px 17px 17px 5px}.body{line-height:1.8}}@media print{body{background:white}.page{max-width:none;padding:0}.top{display:none}.paper{border:0;box-shadow:none;padding:0}.body{font-size:12pt}}</style></head><body><main class="page"><div class="top"><button onclick="window.close()">← Đóng bài đọc</button><button onclick="window.print()">In / lưu PDF</button></div><article class="paper"><div class="category">'+esc(b.category)+'</div><h1 class="title">'+esc(b.title)+'</h1><div class="meta">'+esc(b.author||"")+'</div><div class="body">'+content+'</div></article></main></body></html>';
-      try{win.document.open();win.document.write(page);win.document.close();return;}catch(e){try{win.close();}catch(ignore){}}
-    }
-    /* Nếu trình duyệt chặn tab mới, vẫn mở bài ngay trên trang hiện tại. */
+    /* Hiển thị bài ngay trong tab thư viện. Tránh window.opener bị trình duyệt chặn với file://, khiến nút Sửa không kết nối được. */
     selected=b.id;$("readerCategory").textContent=b.category;$("readerTitle").textContent=b.title;
     $("readerMeta").textContent=b.author||"";$("readerBody").innerHTML=content;
     $("editBook").style.display="inline-block";$("reader").style.display="block";$("addPanel").style.display="none";
@@ -594,7 +635,7 @@ function formatContent(tag) {
       drawWrapped(book.title,"bold 23px Georgia, 'Times New Roman', serif",23,"#854633",0,8);
       if(book.category)drawWrapped(book.category.toUpperCase(),"bold 9px Arial",9,"#a34c38",0,5);
       if(book.author)drawWrapped(book.author,"italic 10px Georgia, serif",10,"#796d61",0,18);else y+=8;
-      var body=document.createElement("div");body.innerHTML=book.content||"";
+      var body=document.createElement("div");body.innerHTML=contentToHtml(book.content||"");
       var nodes=body.childNodes;
       for(var ni=0;ni<nodes.length;ni++){
         var node=nodes[ni];if(node.nodeType!==1&&node.nodeType!==3)continue;
@@ -603,6 +644,16 @@ function formatContent(tag) {
         if(tag==="h1"||tag==="h2"||tag==="h3"||tag==="h4")drawWrapped(txt,"bold 16px Georgia, 'Times New Roman', serif",16,"#854633",0,8);
         else if(tag==="blockquote"){ensure(40);ctx.fillStyle="#a34c38";ctx.fillRect(margin,y,3,20);drawWrapped(txt,"italic 12px Georgia, 'Times New Roman', serif",12,"#80614f",13,13);}
         else if(tag==="ul"||tag==="ol"){var lis=node.getElementsByTagName("li");for(var lj=0;lj<lis.length;lj++)drawWrapped("•  "+(lis[lj].innerText||lis[lj].textContent),"13px Georgia, 'Times New Roman', serif",13,"#3b2d25",8,5);}
+        else if(tag==="table"){
+          var trs=node.getElementsByTagName("tr");
+          for(var tr=0;tr<trs.length;tr++){
+            var cells=trs[tr].children, rowText=[];
+            for(var tc=0;tc<cells.length;tc++) rowText.push((cells[tc].innerText||cells[tc].textContent||"").trim());
+            drawWrapped(rowText.join("   |   "), trs[tr].parentNode.tagName.toLowerCase()==="thead"?"bold 11px Arial":"11px Arial",11,"#3b2d25",4,3);
+            if(tr===0)drawWrapped("----------------------------------------------","10px Arial",10,"#9d4936",4,2);
+          }
+          y+=8;
+        }
         else drawWrapped(txt,"13px Georgia, 'Times New Roman', serif",13,"#3b2d25",0,11);
       }
       pages.push(canvas.toDataURL("image/jpeg",0.88).split(",")[1]);
@@ -631,42 +682,86 @@ function formatContent(tag) {
   $("downloadPdf").onclick=downloadCurrentPdf;
   $("search").oninput=renderBooks;
   $("back").onclick=closeReader;
-  $("editBook").onclick=function(){
-    var b=null;books.forEach(function(x){if(x.id===selected)b=x;});if(!b)return;
-    editingId=b.id;
-    $("formHeading").textContent="Sửa bài đọc";
-    $("newTitle").value=b.title||"";
-    $("newCategory").value=b.category||"";
-    $("newAuthor").value=b.author||"";
-    $("newSummary").value=b.summary||"";
-    $("newContent").value=b.content||"";
-    $("save").textContent="Lưu thay đổi";
-    $("addPanel").style.display="block";
-    document.body.scrollTop=0;document.documentElement.scrollTop=0;
-  };
-  $("showAdd").onclick=function(){
-    editingId=null;$("formHeading").textContent="Thêm một bài đọc";$("save").textContent="Lưu bài vào thư viện";
-    $("addPanel").style.display=$("addPanel").style.display==="none"?"block":"none";
-  };
-  $("cancelAdd").onclick=function(){$("addPanel").style.display="none";editingId=null;$("formHeading").textContent="Thêm một bài đọc";$("save").textContent="Lưu bài vào thư viện";};
+
+  function openEditorWindow(book){
+    /* Biên tập ngay trong tab thư viện: file:// không đảm bảo window.opener/postMessage hoạt động ổn định. */
+    editingId = book ? book.id : null;
+    $("formHeading").textContent = book ? "Sửa bài đọc" : "Thêm một bài đọc";
+    $("save").textContent = book ? "Lưu thay đổi" : "Lưu bài vào thư viện";
+    $("newTitle").value = book ? (book.title || "") : "";
+    $("newCategory").value = book ? (book.category || "") : "";
+    $("newAuthor").value = book ? (book.author || "") : "";
+    $("newSummary").value = book ? (book.summary || "") : "";
+    $("newContent").innerHTML = book ? markdownForEditor(book.content || "") : "<p><br></p>";
+    $("reader").style.display = "none";
+    $("addPanel").style.display = "block";
+    $("addPanel").removeAttribute("hidden");
+    $("library").style.display = book ? "none" : "";
+    $("filters").style.display = book ? "none" : "";
+    document.body.scrollTop = 0; document.documentElement.scrollTop = 0;
+    setTimeout(function(){ try{$("newTitle").focus();}catch(e){} },0);
+  }
+  function handleEditCurrentBook(ev){
+    try {
+      if(ev){ if(ev.preventDefault)ev.preventDefault(); if(ev.stopPropagation)ev.stopPropagation(); }
+      var currentId=selected;
+      var currentTitle=$("readerTitle").textContent || "";
+      var b=null, source=allBooks();
+      /* Resolve the exact open item; do not route to the Add form. */
+      for(var i=0;i<source.length;i++){
+        if(currentId!==null && currentId!==undefined && String(source[i].id)===String(currentId)){b=source[i];break;}
+      }
+      if(!b && currentTitle){
+        for(var j=0;j<source.length;j++){
+          if(String(source[j].title||"").replace(/^\s+|\s+$/g,"")===String(currentTitle).replace(/^\s+|\s+$/g,"")){b=source[j];break;}
+        }
+      }
+      if(!b){
+        alert("Không xác định được bài đang mở. Hãy quay lại thư viện và mở lại bài cần sửa.");
+        return false;
+      }
+      selected=b.id;
+      openEditorWindow(b);
+      return false;
+    } catch(err) {
+      alert("Không mở được trình sửa: "+(err && err.message ? err.message : err));
+      return false;
+    }
+  }
+  /* Gán một lần duy nhất để tránh xử lý click hai lần trên trình duyệt cũ. */
+  var editButton=$("editBook");
+  editButton.type="button";
+  editButton.onclick=null;
+  if(editButton.addEventListener) editButton.addEventListener("click",handleEditCurrentBook,false);
+  else editButton.onclick=handleEditCurrentBook;
+  $("showAdd").onclick=function(){openEditorWindow(null);};
+    $("cancelAdd").onclick=function(){
+      var wasEditing=!!editingId;
+      $("addPanel").style.display="none"; editingId=null;
+      $("formHeading").textContent="Thêm một bài đọc"; $("save").textContent="Lưu bài vào thư viện";
+      if(wasEditing){$("reader").style.display="block";$("library").style.display="none";$("filters").style.display="none";}
+      else{$("library").style.display="";$("filters").style.display="";}
+    };
   $("save").onclick=function(){
     var title=$("newTitle").value.replace(/^\s+|\s+$/g,"");
     var category=$("newCategory").value.replace(/^\s+|\s+$/g,"")||"Chưa phân loại";
-    var content=$("newContent").value;
-    if(!title||!content.replace(/\s/g,"")){alert("Nhập tên bài và nội dung trước nhé.");return;}
+    var content=$("newContent").innerHTML;
+    if(!title||!$("newContent").innerText.replace(/\s/g,"")){alert("Nhập tên bài và nội dung trước nhé.");return;}
     var updated={title:title,category:category,author:$("newAuthor").value,summary:$("newSummary").value,content:content};
     if(editingId){
-      for(var j=0;j<books.length;j++){if(books[j].id===editingId){books[j].title=updated.title;books[j].category=updated.category;books[j].author=updated.author;books[j].summary=updated.summary;books[j].content=updated.content;break;}}
+      var matched=false;
+      for(var j=0;j<books.length;j++){if(String(books[j].id)===String(editingId)){books[j].title=updated.title;books[j].category=updated.category;books[j].author=updated.author;books[j].summary=updated.summary;books[j].content=updated.content;matched=true;break;}}
+      if(!matched){alert("Không tìm thấy bài gốc trong thư viện nên chưa lưu. Hãy quay lại thư viện và mở bài cần sửa lần nữa.");return;}
       selected=editingId;persist();
       $("readerCategory").textContent=updated.category;$("readerTitle").textContent=updated.title;$("readerMeta").textContent=updated.author||"";
-      var displayContent=updated.content||"";
-      if(!/<(p|h[1-6]|blockquote|ul|ol|pre|br)\b/i.test(displayContent)){displayContent=displayContent.split(/\n\s*\n/).map(function(part){return "<p>"+esc(part).replace(/\n/g,"<br>")+"</p>";}).join("");}
+      var displayContent=contentToHtml(updated.content||"");
+      if(!/<(p|h[1-6]|blockquote|ul|ol|pre|br|table)\b/i.test(displayContent)){displayContent=displayContent.split(/\n\s*\n/).map(function(part){return "<p>"+esc(part).replace(/\n/g,"<br>")+"</p>";}).join("");}
       $("readerBody").innerHTML=displayContent;
     }else{
       books.unshift({id:"b"+(new Date().getTime()),title:title,category:category,author:$("newAuthor").value,summary:$("newSummary").value,content:content});
       persist();active="Tất cả";renderFilters();renderBooks();
     }
-    $("newTitle").value="";$("newCategory").value="";$("newAuthor").value="";$("newSummary").value="";$("newContent").value="";
+    $("newTitle").value="";$("newCategory").value="";$("newAuthor").value="";$("newSummary").value="";$("newContent").innerHTML="<p><br></p>";
     $("addPanel").style.display="none";var wasEditing=!!editingId;editingId=null;$("formHeading").textContent="Thêm một bài đọc";$("save").textContent="Lưu bài vào thư viện";if(wasEditing){alert("Đã lưu thay đổi.");}else{alert("Đã thêm bài vào thư viện trên thiết bị này.");}
   };
   $("export").onclick=function(){
