@@ -613,71 +613,22 @@ function contentToHtml(raw) {
   function closeReader(){$("reader").style.display="none";$("library").style.display="";$("filters").style.display="";selected=null;}
   function downloadCurrentPdf(){
     if(!selected){alert("Hãy mở một bài đọc trước.");return;}
-    var book=null;for(var bi=0;bi<books.length;bi++){if(String(books[bi].id)===String(selected)){book=books[bi];break;}}
+    var book=null;allBooks().forEach(function(b){if(String(b.id)===String(selected))book=b;});
     if(!book){alert("Không tìm thấy bài đọc.");return;}
-    try{
-      var pageW=595,pageH=842,scale=2,margin=58, pages=[], canvas=document.createElement("canvas"),ctx=canvas.getContext("2d");
-      canvas.width=pageW*scale;canvas.height=pageH*scale;
-      function startPage(){
-        canvas=document.createElement("canvas");canvas.width=pageW*scale;canvas.height=pageH*scale;ctx=canvas.getContext("2d");ctx.scale(scale,scale);
-        ctx.fillStyle="#fffaf2";ctx.fillRect(0,0,pageW,pageH);ctx.fillStyle="#9d4936";ctx.font="bold 9px Arial";ctx.fillText("DOC DE HIEU · HOC DE NHO",margin,35);
-        ctx.strokeStyle="#d7c9b8";ctx.beginPath();ctx.moveTo(margin,47);ctx.lineTo(pageW-margin,47);ctx.stroke();
-        ctx.fillStyle="#3b2d25";ctx.textBaseline="top";return 72;
-      }
-      var y=startPage(), usable=pageW-margin*2;
-      function ensure(h){if(y+h>pageH-58){pages.push(canvas.toDataURL("image/jpeg",0.88).split(",")[1]);y=startPage();}}
-      function drawWrapped(text,font,size,color,indent,spaceAfter){
-        ctx.font=font;ctx.fillStyle=color;var words=String(text||"").replace(/\s+/g," ").trim().split(" "), line="", lines=[];
-        for(var wi=0;wi<words.length;wi++){var test=line?line+" "+words[wi]:words[wi];if(ctx.measureText(test).width>usable-indent&&line){lines.push(line);line=words[wi];}else line=test;}
-        if(line)lines.push(line);var lineH=size*1.62;ensure(lines.length*lineH+spaceAfter);
-        for(var li=0;li<lines.length;li++){ctx.fillText(lines[li],margin+indent,y);y+=lineH;}y+=spaceAfter;
-      }
-      drawWrapped(book.title,"bold 23px Georgia, 'Times New Roman', serif",23,"#854633",0,8);
-      if(book.category)drawWrapped(book.category.toUpperCase(),"bold 9px Arial",9,"#a34c38",0,5);
-      if(book.author)drawWrapped(book.author,"italic 10px Georgia, serif",10,"#796d61",0,18);else y+=8;
-      var body=document.createElement("div");body.innerHTML=contentToHtml(book.content||"");
-      var nodes=body.childNodes;
-      for(var ni=0;ni<nodes.length;ni++){
-        var node=nodes[ni];if(node.nodeType!==1&&node.nodeType!==3)continue;
-        var tag=node.nodeType===1?node.tagName.toLowerCase():"p";var txt=node.nodeType===1?(node.innerText||node.textContent||""):node.nodeValue;
-        txt=String(txt||"").replace(/\s+/g," ").trim();if(!txt)continue;
-        if(tag==="h1"||tag==="h2"||tag==="h3"||tag==="h4")drawWrapped(txt,"bold 16px Georgia, 'Times New Roman', serif",16,"#854633",0,8);
-        else if(tag==="blockquote"){ensure(40);ctx.fillStyle="#a34c38";ctx.fillRect(margin,y,3,20);drawWrapped(txt,"italic 12px Georgia, 'Times New Roman', serif",12,"#80614f",13,13);}
-        else if(tag==="ul"||tag==="ol"){var lis=node.getElementsByTagName("li");for(var lj=0;lj<lis.length;lj++)drawWrapped("•  "+(lis[lj].innerText||lis[lj].textContent),"13px Georgia, 'Times New Roman', serif",13,"#3b2d25",8,5);}
-        else if(tag==="table"){
-          var trs=node.getElementsByTagName("tr");
-          for(var tr=0;tr<trs.length;tr++){
-            var cells=trs[tr].children, rowText=[];
-            for(var tc=0;tc<cells.length;tc++) rowText.push((cells[tc].innerText||cells[tc].textContent||"").trim());
-            drawWrapped(rowText.join("   |   "), trs[tr].parentNode.tagName.toLowerCase()==="thead"?"bold 11px Arial":"11px Arial",11,"#3b2d25",4,3);
-            if(tr===0)drawWrapped("----------------------------------------------","10px Arial",10,"#9d4936",4,2);
-          }
-          y+=8;
-        }
-        else drawWrapped(txt,"13px Georgia, 'Times New Roman', serif",13,"#3b2d25",0,11);
-      }
-      pages.push(canvas.toDataURL("image/jpeg",0.88).split(",")[1]);
-      function b64bin(b64){var raw=atob(b64),out="";for(var z=0;z<raw.length;z++)out+=raw.charAt(z);return out;}
-      var objs=[],catalogId=1,pagesId=2,nextId=3,pageRefs=[];
-      objs[1]='<< /Type /Catalog /Pages 2 0 R >>';
-      for(var pi=0;pi<pages.length;pi++){
-        var pageId=nextId++,imageId=nextId++,contentId=nextId++;pageRefs.push(pageId+" 0 R");
-        var jpg=b64bin(pages[pi]);
-        objs[imageId]='<< /Type /XObject /Subtype /Image /Width '+(pageW*scale)+' /Height '+(pageH*scale)+' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length '+jpg.length+' >>\nstream\n'+jpg+'\nendstream';
-        var stream='q\n'+pageW+' 0 0 '+pageH+' 0 0 cm\n/Im'+pi+' Do\nQ\n';
-        objs[contentId]='<< /Length '+stream.length+' >>\nstream\n'+stream+'endstream';
-        objs[pageId]='<< /Type /Page /Parent 2 0 R /MediaBox [0 0 '+pageW+' '+pageH+'] /Resources << /XObject << /Im'+pi+' '+imageId+' 0 R >> >> /Contents '+contentId+' 0 R >>';
-      }
-      objs[2]='<< /Type /Pages /Kids ['+pageRefs.join(' ')+'] /Count '+pages.length+' >>';
-      var pdf='%PDF-1.4\n%\xE2\xE3\xCF\xD3\n',offsets=[0];
-      for(var oi=1;oi<objs.length;oi++){offsets[oi]=pdf.length;pdf+=oi+' 0 obj\n'+objs[oi]+'\nendobj\n';}
-      var xref=pdf.length;pdf+='xref\n0 '+objs.length+'\n0000000000 65535 f \n';for(var xi=1;xi<objs.length;xi++){var off=('0000000000'+offsets[xi]).slice(-10);pdf+=off+' 00000 n \n';}
-      pdf+='trailer\n<< /Size '+objs.length+' /Root 1 0 R >>\nstartxref\n'+xref+'\n%%EOF';
-      var bytes=new Uint8Array(pdf.length);for(var pj=0;pj<pdf.length;pj++)bytes[pj]=pdf.charCodeAt(pj)&255;
-      var blob=new Blob([bytes],{type:"application/pdf"}),url=URL.createObjectURL(blob),a=document.createElement("a");
-      a.href=url;a.download=(book.title||"bai-doc").replace(/[\\/:*?"<>|]/g,"-").slice(0,70)+".pdf";a.style.display="none";document.body.appendChild(a);a.click();
-      setTimeout(function(){try{document.body.removeChild(a);}catch(e){}URL.revokeObjectURL(url);},3000);
-    }catch(err){alert("Chưa tạo được PDF trên trình duyệt này. Hãy thử mở lại bài rồi bấm Tải PDF lần nữa.");}
+    /* In HTML thật thay vì chụp từng trang canvas: giữ tiêu đề, đoạn, danh sách và bảng như trên web. */
+    var bodyHtml=contentToHtml(book.content||"");
+    if(!/<(p|h[1-6]|blockquote|ul|ol|pre|br|table)\b/i.test(bodyHtml)){
+      bodyHtml=String(book.content||"").split(/\n\s*\n/).map(function(p){return "<p>"+esc(p).replace(/\n/g,"<br>")+"</p>";}).join("");
+    }
+    var win=window.open("","_blank");
+    if(!win){alert("Trình duyệt đang chặn cửa sổ xuất PDF. Hãy cho phép cửa sổ bật lên rồi thử lại.");return;}
+    var safeTitle=esc(book.title||"Bài đọc");
+    var html='<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+safeTitle+'</title><style>'+
+      '*{box-sizing:border-box}html,body{margin:0;padding:0;background:#fffaf2;color:#392d24;font-family:Georgia,"Times New Roman",serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}'+
+      'body{font-size:12pt;line-height:1.8;overflow-wrap:anywhere;word-wrap:break-word}main{max-width:760px;margin:0 auto;padding:22px 0 40px}.mast{font:bold 8pt Arial,sans-serif;letter-spacing:1.5px;color:#a34c38;border-bottom:1px solid #d7c9b8;padding-bottom:10px;margin-bottom:22px}.category{font:bold 9pt Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;color:#a34c38;margin-bottom:8px}h1{font-size:27pt;line-height:1.2;font-weight:normal;color:#854633;margin:0 0 14px;overflow-wrap:anywhere}.author{font-size:10pt;color:#796d61;margin:0 0 22px}.body{font-size:12pt;line-height:1.85;overflow-wrap:anywhere;word-break:normal}.body p{margin:0 0 1em}.body h1,.body h2,.body h3,.body h4{color:#854633;line-height:1.35;margin:1.35em 0 .55em;break-after:avoid-page}.body h1{font-size:20pt}.body h2{font-size:17pt}.body h3{font-size:14pt}.body h4{font-size:12pt}.body blockquote{border-left:3px solid #a34c38;margin:1.2em 0;padding:4px 0 4px 14px;color:#80614f;break-inside:avoid}.body ul,.body ol{padding-left:1.6em}.body li{margin:.25em 0}.body table{border-collapse:collapse;width:100%;max-width:100%;margin:1em 0;table-layout:auto;font-size:10.5pt;break-inside:auto}.body tr{break-inside:avoid;break-after:auto}.body th,.body td{border:1px solid #bca995;padding:7px 8px;text-align:left;vertical-align:top;overflow-wrap:anywhere;word-break:normal}.body th{background:#eee2d2;font-weight:bold}.body tr:nth-child(even) td{background:#fffaf2}.body pre,.body code{white-space:pre-wrap;overflow-wrap:anywhere}.body img{max-width:100%;height:auto}'+
+      '@page{size:A4;margin:18mm 17mm 20mm} @media print{html,body{background:#fffaf2!important}main{max-width:none;margin:0;padding:0}.mast{margin-bottom:18px}a{color:inherit;text-decoration:none}thead{display:table-header-group}tfoot{display:table-footer-group}}'+
+      '</style></head><body><main><div class="mast">ĐỌC ĐỂ HIỂU · HỌC ĐỂ NHỚ</div><div class="category">'+esc(book.category||"")+'</div><h1>'+safeTitle+'</h1>'+(book.author?'<div class="author">'+esc(book.author)+'</div>':'')+'<article class="body">'+bodyHtml+'</article></main><script>window.onload=function(){setTimeout(function(){window.focus();window.print();},350)};<\/script></body></html>';
+    win.document.open();win.document.write(html);win.document.close();
   }
   $("downloadPdf").onclick=downloadCurrentPdf;
   $("search").oninput=renderBooks;
