@@ -149,6 +149,194 @@ h2, .section-title, .section-heading, .library-heading {
 }
 </style>
 
+
+<style>
+/* ===== Editorial redesign: thư viện như một tạp chí in ===== */
+:root { color-scheme: light; }
+body {
+  background: #f4eee3;
+  color: #33271f;
+  font-family: Georgia, "Times New Roman", serif;
+}
+header {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 28px 5.2% 18px !important;
+  border: 0 !important;
+  border-bottom: 1px solid #d8c8b5 !important;
+  border-radius: 0 !important;
+  background: #f4eee3 !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+header > div { max-width: 1180px !important; margin: 0 auto !important; }
+header > div > div:first-child {
+  margin-bottom: 22px !important;
+  font-size: 10px !important;
+  letter-spacing: 3px !important;
+}
+header > div > div:nth-child(2) {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 0 0 23px !important;
+  margin: 0 !important;
+  border-bottom: 1px solid #d8c8b5 !important;
+  position: relative;
+}
+.poem-lines {
+  max-width: 880px;
+  color: #5c4132 !important;
+  font-size: 20px !important;
+  line-height: 1.8 !important;
+}
+.poem-lines > div {
+  display: block !important;
+  white-space: normal !important;
+  margin: 0 0 5px !important;
+  font-size: 20px !important;
+}
+.poem-lines > div span { display: inline !important; white-space: normal !important; }
+.poem-lines > div span + span:before { content: " "; }
+.poem-lines > div:last-child {
+  margin-top: 14px !important;
+  text-align: right !important;
+}
+.top-tools {
+  max-width: 1180px;
+  margin: 18px auto 0 !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center;
+  gap: 16px !important;
+}
+.toolbar { display: flex !important; flex: 1; gap: 10px !important; margin: 0 !important; }
+#search {
+  border: 0 !important;
+  border-bottom: 1px solid #cbb8a3 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  padding: 13px 3px !important;
+  color: #33271f;
+}
+#search:focus { outline: none; border-bottom: 2px solid #994733 !important; }
+button {
+  border-radius: 3px !important;
+  box-shadow: none !important;
+  transition: background .15s ease;
+}
+button:not(.secondary):not(.chip) { background: #914630 !important; }
+button.secondary {
+  background: transparent !important;
+  border: 1px solid #d2c0ad !important;
+  color: #5b4537 !important;
+}
+button:hover { filter: brightness(.96); }
+main { max-width: 1180px !important; padding: 26px 5.2% 50px !important; }
+.sectionline {
+  border-bottom: 1px solid #d8c8b5 !important;
+  padding-bottom: 10px !important;
+  margin: 30px 0 16px !important;
+}
+.sectionline h2 {
+  font-size: 23px !important;
+  font-weight: normal !important;
+  letter-spacing: -.4px;
+}
+.count { letter-spacing: 1.3px; }
+.filters { gap: 7px !important; margin-bottom: 20px !important; }
+.chip {
+  border: 0 !important;
+  border-bottom: 1px solid transparent !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  padding: 8px 12px !important;
+  color: #735e4e !important;
+}
+.chip.active {
+  background: transparent !important;
+  border-bottom: 1px solid #914630 !important;
+  color: #914630 !important;
+}
+.bookgrid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 0 34px !important;
+  border-top: 1px solid #d8c8b5;
+}
+.book {
+  background: transparent !important;
+  border: 0 !important;
+  border-bottom: 1px solid #d8c8b5 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 23px 8px 24px 0 !important;
+  margin: 0 !important;
+  min-width: 0;
+}
+.book:nth-child(4n+2) { padding-left: 12px !important; }
+.book .category { font-size: 10px !important; letter-spacing: 2px !important; color: #a34c38 !important; }
+.book h3 {
+  font-size: 25px !important;
+  line-height: 1.28 !important;
+  letter-spacing: -.4px;
+  margin: 10px 0 9px !important;
+  color: #3a2a21;
+}
+.book p { font-size: 14px !important; line-height: 1.75 !important; color: #766658 !important; max-width: 42em; }
+.book .meta { font-size: 10px !important; letter-spacing: .4px; }
+.book:hover { background: rgba(255,250,242,.45) !important; }
+.book.selected-book { background: #eee0cf !important; outline: 1px solid #a34c38; }
+.reader {
+  border: 0 !important;
+  border-top: 1px solid #d8c8b5 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  padding: 28px 0 !important;
+  max-width: 850px;
+  margin: 10px auto 0 !important;
+}
+.reader .actions { margin-bottom: 35px !important; }
+.reader h2 { font-size: 38px !important; line-height: 1.18 !important; font-weight: normal !important; }
+.reader .body { font-size: 19px !important; line-height: 1.95 !important; color: #392d24; }
+.reader .body h3 { font-size: 23px !important; margin-top: 1.8em !important; }
+.reader .body blockquote { border-left: 2px solid #a34c38 !important; color: #805d49 !important; }
+.admin {
+  border-top: 1px solid #a34c38 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: #eee4d6 !important;
+}
+input, select, textarea { border-radius: 3px !important; }
+footer { max-width: 1180px !important; padding: 22px 5.2% 30px !important; }
+.empty { background: transparent !important; border-bottom: 1px solid #d8c8b5; }
+@media (max-width: 760px) {
+  header { padding: 20px 18px 14px !important; }
+  .poem-lines { font-size: 17px !important; line-height: 1.7 !important; }
+  .poem-lines > div { font-size: 17px !important; }
+  .top-tools { display: block !important; margin-top: 14px !important; }
+  .toolbar { display: flex !important; flex-wrap: wrap; gap: 8px !important; }
+  #search { flex: 1 1 100%; width: 100%; }
+  .data-tools { margin-top: 8px; }
+  main { padding: 18px 18px 35px !important; }
+  .sectionline { margin-top: 25px !important; }
+  .bookgrid { grid-template-columns: minmax(0,1fr) !important; gap: 0 !important; }
+  .book, .book:nth-child(4n+2) { padding: 19px 2px 20px !important; }
+  .book h3 { font-size: 23px !important; }
+  .reader { padding: 20px 0 !important; }
+  .reader h2 { font-size: 30px !important; }
+  .reader .body { font-size: 17px !important; }
+}
+@media (max-width: 380px) {
+  .poem-lines { font-size: 16px !important; }
+  .poem-lines > div { font-size: 16px !important; }
+  .sectionline h2 { font-size: 21px !important; }
+}
+</style>
+
 </head>
 <body>
 <header style="position:relative;overflow:hidden">
@@ -161,7 +349,7 @@ h2, .section-title, .section-heading, .library-heading {
       <div class="poem-lines" style="color:#6e5141;font-family:Georgia,'Times New Roman',serif;font-size:18px;line-height:1.55">
         <div style="display:flex;justify-content:space-between;align-items:baseline;gap:14px;white-space:nowrap;font-size:17px;margin:0 0 4px 0"><span>Kẻ lữ hành <em>say giấc</em> giữa ngân hà,</span><span>Tâm phiêu du qua vạn nẻo bao la.</span></div>
         <div style="display:flex;justify-content:space-between;align-items:baseline;gap:14px;white-space:nowrap;font-size:17px"><span>Mắt <em>rong ruổi</em> muôn phương trời viễn mộng,</span><span>Mãi mê tìm những thế giới ngoài xa.</span></div>
-        <div style="text-align:right;margin-top:5px;color:#9d4936;font-size:11px;letter-spacing:1.5px"><span style="display:inline-block;width:30px;border-top:1px solid #b66c51;vertical-align:middle;margin-right:9px"></span><strong><em>aurora</em></strong></div>
+        <div style="text-align:right;margin-top:5px;color:#9d4936;font-size:11px;letter-spacing:1.5px"><span style="display:inline-block;width:30px;border-top:1px solid #b66c51;vertical-align:middle;margin-right:9px"></span><strong><em>Aurora</em></strong></div>
       </div>
     </div>
     <div class="top-tools">
