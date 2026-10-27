@@ -263,7 +263,17 @@ function formatContent(tag) {
     {id:"bai-mau-2",title:"Ghi chú một ý tưởng",category:"Ghi chú",author:"Bài đọc minh họa",summary:"Ví dụ cho một bài ngắn, có thể thay thế bằng nội dung của riêng bạn.",content:"<p>Mỗi ghi chú nên giữ một ý chính. Đặt tiêu đề cụ thể để sau này có thể tìm lại mà không phải đọc toàn bộ nội dung.</p><h3>Ý chính</h3><p>Ghi điều quan trọng nhất trước, sau đó bổ sung ví dụ và câu hỏi còn bỏ ngỏ.</p>"}
   ];
   var books = starter.slice();
-  var remotePdfs = [];
+  /* Danh sách dự phòng: iPad 2/Safari cũ có thể không gọi được GitHub API.
+     Thêm tên PDF mới vào danh sách này nếu máy cũ không tự nhận diện được. */
+  var remotePdfs = [{
+    id:"github-pdf-germany.pdf",
+    title:"germany",
+    category:"Tài liệu PDF",
+    author:"GitHub · PDF",
+    summary:"Tệp PDF trong thư mục gốc GitHub. Bấm để mở hoặc tải.",
+    content:"",
+    pdfUrl:"https://raw.githubusercontent.com/SCPngocmai/down/main/germany.pdf"
+  }];
   function allBooks(){ return books.concat(remotePdfs); }
   var active = "Tất cả";
   var selected = null;
@@ -475,10 +485,20 @@ function formatContent(tag) {
         entries.forEach(function(file){
           if(file&&file.type==="file"&&/\.pdf$/i.test(file.name)){
             var title=file.name.replace(/\.pdf$/i,"").replace(/[_-]+/g," ").replace(/\s+/g," ").replace(/^\s+|\s+$/g,"");
-            found.push({id:"github-pdf-"+file.name,title:title,category:"Tài liệu PDF",author:"GitHub · PDF",summary:"Tệp PDF trong thư mục gốc GitHub. Bấm để mở hoặc đọc.",content:"",pdfUrl:"https://SCPngocmai.github.io/down/"+encodeURIComponent(file.name)});
+            found.push({id:"github-pdf-"+file.name,title:title,category:"Tài liệu PDF",author:"GitHub · PDF",summary:"Tệp PDF trong thư mục gốc GitHub. Bấm để mở hoặc đọc.",content:"",pdfUrl:"https://raw.githubusercontent.com/SCPngocmai/down/main/"+encodeURIComponent(file.name)});
           }
         });
-        remotePdfs=found;renderFilters();renderBooks();
+        /* Giữ danh sách dự phòng nếu API không trả PDF; tránh trùng tên tệp. */
+        if(found.length){
+          var merged=found.slice();
+          for(var fi=0;fi<remotePdfs.length;fi++){
+            var exists=false;
+            for(var fj=0;fj<merged.length;fj++) if(merged[fj].id===remotePdfs[fi].id) exists=true;
+            if(!exists) merged.push(remotePdfs[fi]);
+          }
+          remotePdfs=merged;
+        }
+        renderFilters();renderBooks();
       }catch(ignore){}
     };
     request.send();
