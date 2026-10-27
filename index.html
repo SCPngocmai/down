@@ -758,17 +758,8 @@ function contentToHtml(raw) {
   }
   /* Tự tìm PDF qua jsDelivr CDN API thay vì api.github.com (Safari iPad 2 có thể không kết nối được GitHub API). */
   var fileListApi="https://data.jsdelivr.com/v1/package/gh/SCPngocmai/down@main/flat";
-  function showPdfStatus(message){
-    var box=document.getElementById("githubPdfStatus");
-    if(!box){
-      box=document.createElement("div");
-      box.id="githubPdfStatus";
-      box.style.cssText="margin:12px 0;padding:10px 12px;border:1px solid #c8b9a5;border-radius:8px;background:#fff8ed;color:#594536;font:14px/1.5 Arial,sans-serif;overflow-wrap:break-word;";
-      var host=document.querySelector("main")||document.body;
-      host.insertBefore(box,host.firstChild);
-    }
-    box.textContent=message;
-  }
+  /* Đã ẩn thông báo trạng thái PDF theo yêu cầu; vẫn giữ nguyên cơ chế tải danh sách. */
+  function showPdfStatus(message){}
   function encodePath(path){
     return String(path||"").replace(/^\/+/,"").split("/").map(function(part){return encodeURIComponent(part);}).join("/");
   }
