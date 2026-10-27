@@ -720,36 +720,53 @@ function contentToHtml(raw) {
     r.readAsText(f);this.value="";
   };
   load();renderFilters();renderBooks();
-  /* Tự lấy các PDF ở thư mục gốc của GitHub, cùng cấp với index.html; không quét thư mục files. */
-  var githubApi="https://api.github.com/repos/SCPngocmai/down/contents/";
+  /* Tự lấy PDF từ GitHub API; hiện chẩn đoán để biết vì sao Safari cũ không tải được danh sách. */
+  var githubApi="https://api.github.com/repos/SCPngocmai/down/contents/?ref=main";
+  function showPdfStatus(message){
+    var box=document.getElementById("githubPdfStatus");
+    if(!box){
+      box=document.createElement("div");
+      box.id="githubPdfStatus";
+      box.style.cssText="margin:12px 0;padding:10px 12px;border:1px solid #c8b9a5;border-radius:8px;background:#fff8ed;color:#594536;font:14px/1.5 Arial,sans-serif;overflow-wrap:break-word;";
+      var host=document.querySelector("main")||document.body;
+      host.insertBefore(box,host.firstChild);
+    }
+    box.textContent=message;
+  }
   try{
     var request=new XMLHttpRequest();
     request.open("GET",githubApi,true);
     request.onreadystatechange=function(){
-      if(request.readyState!==4||request.status<200||request.status>=300)return;
+      if(request.readyState!==4)return;
+      if(request.status<200||request.status>=300){
+        showPdfStatus("Chưa lấy được danh sách PDF từ GitHub. Mã HTTP: "+request.status+".");
+        return;
+      }
       try{
         var entries=JSON.parse(request.responseText), found=[];
-        entries.forEach(function(file){
+        if(!entries||typeof entries.length!=="number")throw new Error("Phản hồi API không phải danh sách tệp");
+        for(var i=0;i<entries.length;i++){
+          var file=entries[i];
           if(file&&file.type==="file"&&/\.pdf$/i.test(file.name)){
-            var title=file.name.replace(/\.pdf$/i,"").replace(/[_-]+/g," ").replace(/\s+/g," ").replace(/^\s+|\s+$/g,"");
+            var title=file.name.replace(/\.pdf$/i,"").replace(/\s+/g," ").replace(/^\s+|\s+$/g,"");
             found.push({id:"github-pdf-"+file.name,title:title,category:"Tài liệu PDF",author:"GitHub · PDF",summary:"Tệp PDF trong thư mục gốc GitHub. Bấm để mở hoặc đọc.",content:"",pdfUrl:"https://raw.githubusercontent.com/SCPngocmai/down/main/"+encodeURIComponent(file.name)});
           }
-        });
-        /* Giữ danh sách dự phòng nếu API không trả PDF; tránh trùng tên tệp. */
-        if(found.length){
-          var merged=found.slice();
-          for(var fi=0;fi<remotePdfs.length;fi++){
-            var exists=false;
-            for(var fj=0;fj<merged.length;fj++) if(merged[fj].id===remotePdfs[fi].id) exists=true;
-            if(!exists) merged.push(remotePdfs[fi]);
-          }
-          remotePdfs=merged;
         }
+        remotePdfs=found;
+        if(found.length)showPdfStatus("Đã tự tìm thấy "+found.length+" tệp PDF trong thư mục gốc GitHub.");
+        else showPdfStatus("GitHub API kết nối được nhưng không thấy PDF ở thư mục gốc. Có thể PDF nằm trong thư mục con.");
         renderFilters();renderBooks();
-      }catch(ignore){}
+      }catch(error){
+        showPdfStatus("Đã kết nối GitHub nhưng không đọc được danh sách: "+String(error.message||error));
+      }
     };
+    request.onerror=function(){showPdfStatus("Safari không kết nối được GitHub API. Lỗi kết nối/trình duyệt, không phải do dấu tiếng Việt trong tên PDF.");};
+    request.ontimeout=function(){showPdfStatus("Kết nối GitHub API quá thời gian chờ. Hãy thử tải lại trang.");};
+    request.timeout=15000;
     request.send();
-  }catch(ignore){}
+  }catch(error){
+    showPdfStatus("Không thể khởi tạo yêu cầu GitHub API: "+String(error.message||error));
+  }
   var dateFooter = document.getElementById("dateFooter");
   if (dateFooter) {
     var now = new Date();
