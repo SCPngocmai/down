@@ -6,6 +6,48 @@
     "summary": "Tệp PDF · Sửa Đề 1.pdf"
   },
   {
+    "name": "Sửa Đề 2",
+    "file": "files/Sửa Đề 2.pdf",
+    "category": "Tài liệu PDF",
+    "summary": "Tệp PDF · Sửa Đề 2.pdf"
+  },
+  {
+    "name": "Sửa Đề 3",
+    "file": "files/Sửa Đề 3.pdf",
+    "category": "Tài liệu PDF",
+    "summary": "Tệp PDF · Sửa Đề 3.pdf"
+  },
+  {
+    "name": "Sửa Đề 4",
+    "file": "files/Sửa Đề 4.pdf",
+    "category": "Tài liệu PDF",
+    "summary": "Tệp PDF · Sửa Đề 4.pdf"
+  },
+  {
+    "name": "Sửa Đề 5",
+    "file": "files/Sửa Đề 5.pdf",
+    "category": "Tài liệu PDF",
+    "summary": "Tệp PDF · Sửa Đề 5.pdf"
+  },
+  {
+    "name": "Sửa Đề 6",
+    "file": "files/Sửa Đề 6.pdf",
+    "category": "Tài liệu PDF",
+    "summary": "Tệp PDF · Sửa Đề 6.pdf"
+  },
+  {
+    "name": "Sửa Đề 7",
+    "file": "files/Sửa Đề 7.pdf",
+    "category": "Tài liệu PDF",
+    "summary": "Tệp PDF · Sửa Đề 7.pdf"
+  },
+  {
+    "name": "Sửa Đề 8",
+    "file": "files/Sửa Đề 8.pdf",
+    "category": "Tài liệu PDF",
+    "summary": "Tệp PDF · Sửa Đề 8.pdf"
+  },
+  {
     "name": "Đề đọc 1",
     "file": "files/Đề đọc 1.pdf",
     "category": "Tài liệu PDF",
@@ -22,5 +64,35 @@
     "file": "files/Đề đọc 3.pdf",
     "category": "Tài liệu PDF",
     "summary": "Tệp PDF · Đề đọc 3.pdf"
+  },
+  {
+    "name": "Đề đọc 4",
+    "file": "files/Đề đọc 4.pdf",
+    "category": "Tài liệu PDF",
+    "summary": "Tệp PDF · Đề đọc 4.pdf"
+  },
+  {
+    "name": "Đề đọc 5",
+    "file": "files/Đề đọc 5.pdf",
+    "category": "Tài liệu PDF",
+    "summary": "Tệp PDF · Đề đọc 5.pdf"
+  },
+  {
+    "name": "Đề đọc 6",
+    "file": "files/Đề đọc 6.pdf",
+    "category": "Tài liệu PDF",
+    "summary": "Tệp PDF · Đề đọc 6.pdf"
+  },
+  {
+    "name": "Đề đọc 7",
+    "file": "files/Đề đọc 7.pdf",
+    "category": "Tài liệu PDF",
+    "summary": "Tệp PDF · Đề đọc 7.pdf"
+  },
+  {
+    "name": "Đề đọc 8",
+    "file": "files/Đề đọc 8.pdf",
+    "category": "Tài liệu PDF",
+    "summary": "Tệp PDF · Đề đọc 8.pdf"
   }
 ]
