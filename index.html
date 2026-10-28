@@ -591,7 +591,13 @@ function contentToHtml(raw) {
   };
   function openBook(id){
     var b=null;allBooks().forEach(function(x){if(String(x.id)===String(id))b=x;});if(!b)return;
-    if(b.pdfUrl){window.open(b.pdfUrl,"_blank");return;}
+    if(b.pdfUrl){
+      /* Dùng PDF.js thay vì trình xem PDF tích hợp của trình duyệt.
+         Có thể khắc phục lỗi hiển thị font do trình xem; không thể sửa font đã hỏng bên trong PDF. */
+      var pdfJsViewer = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + encodeURIComponent(b.pdfUrl);
+      window.open(pdfJsViewer, "_blank", "noopener");
+      return;
+    }
     var content=contentToHtml(b.content||"");
     if(!/<(p|h[1-6]|blockquote|ul|ol|pre|br|table)\b/i.test(content)){
       content=content.split(/\n\s*\n/).map(function(p){return "<p>"+esc(p).replace(/\n/g,"<br>")+"</p>";}).join("");
